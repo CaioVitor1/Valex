@@ -2,6 +2,7 @@ import * as mycardRepository from "../repositories/myCardRepository"
 import { faker } from "@faker-js/faker";
 import dayjs from "dayjs";
 import Cryptr from "cryptr";
+import bcrypt from 'bcrypt';
 
 export async function verifydatesNewCard(apiKey: any,employeeId: number, type: string) {
     faker.locale = 'pt_BR'
@@ -29,7 +30,7 @@ if(!lookingKey) {
   //regra de negócio: verificando se o empregado possui mais de dois cartões com o mesMo tipo 
   const {rows: lookingTypeCards} = await mycardRepository.searchNumberCard(employeeId, type)
   if(lookingTypeCards.length !== 0) {
-    throw { code: "Unauthorized", message: "Não é possível ter mais de 1 cartão com o mesmo número" };
+    throw { code: "Unauthorized", message: "Não é possível ter mais de 1 cartão com do mesmo tipo" };
   }
 
 // regra de negocio: gerando número do cartao
@@ -71,4 +72,48 @@ function changeName(lookingEmployee:any) {
             
           }
   
+  }
+
+  export async function tryActive(cardId: number, decryptedCvc: string, password: number) {
+
+    //Regra de negócio: apenas cartões cadastrados devem ser ativados
+    const {rows: lookingCard} = await mycardRepository.seachCard(cardId)
+    if(!lookingCard) {
+        throw { code: "notFound", message: "Card não cadastrado!" };
+    }
+    console.log(lookingCard)
+    
+    // Regra de negócio: Somente cartões não expirados devem ser ativados
+    const data = lookingCard[0].expirationDate
+    const array = data.split("/")
+    const month = (dayjs().month())
+    const year = Number(dayjs().year())
+    console.log(array, month, year)
+    if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
+        throw { code: "Unauthorized", message: "Cartão com validade expirada" };
+    }
+
+    //Regra de negócio: apenas cartões não ativados devem ser ativados
+    if(lookingCard[0].isBlocked === false) {
+        throw { code: "Unauthorized", message: "Cartão já está ativado" };
+    }
+
+    //Regra de negócio: O CVC deverá ser recebido e verificado
+    const cryptr = new Cryptr('myTotallySecretKey');
+    const decrypted = (cryptr.decrypt(lookingCard[0].securityCode));
+    if(Number(decryptedCvc) !==  Number(decrypted)){
+        throw { code: "Unauthorized", message: "Código de segurança inválido!" };
+    }
+ 
+    //Regra de negócio: senha com 4 números
+    if(typeof password === "string" || (password.toString()).length !== 4) {
+        throw { code: "Unprocessable_Entity", message: "senha incorreta!" };
+    }
+
+    //Regra de negócio: encriptar a senha
+    const encryptedPassword = bcrypt.hashSync(password.toString(), 10);
+    console.log(encryptedPassword)
+
+    const active = await mycardRepository.activeCard(cardId)
+
   }

@@ -34,3 +34,11 @@ export async function insertCard(employeeId: number, cardNumber: string, nameCar
     ]
   );
 } 
+
+export async function seachCard(cardId: number) {
+return await connection.query('SELECT * FROM cards WHERE id = $1', [cardId])
+}
+
+export async function activeCard(cardId: number){
+  return await connection.query('UPDATE cards SET "isBlocked" = false WHERE id = $1;', [cardId])
+}

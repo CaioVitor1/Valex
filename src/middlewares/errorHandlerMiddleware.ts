@@ -8,6 +8,9 @@ export default function errorHandler (error: any, req: Request, res: Response, n
   if (error.code === "notFound") {
     return res.status(404).send(error.message)
   } 
+  if(error.code == "Unprocessable_Entity"){
+    return res.status(422).send(error.message)
+  }
   
   res.sendStatus(500); // internal server error
 }
