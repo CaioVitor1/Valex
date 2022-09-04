@@ -94,8 +94,8 @@ function changeName(lookingEmployee:any) {
     }
 
     //Regra de negócio: apenas cartões não ativados devem ser ativados
-    if(lookingCard[0].isBlocked === false) {
-        throw { code: "Unauthorized", message: "Cartão já está ativado" };
+    if(lookingCard[0].password !== null) {
+       throw { code: "Unauthorized", message: "Cartão já está ativado" };
     }
 
     //Regra de negócio: O CVC deverá ser recebido e verificado
@@ -113,7 +113,61 @@ function changeName(lookingEmployee:any) {
     //Regra de negócio: encriptar a senha
     const encryptedPassword = bcrypt.hashSync(password.toString(), 10);
     console.log(encryptedPassword)
-
-    const active = await mycardRepository.activeCard(cardId)
-
+    
+    const active = await mycardRepository.activeCard(cardId, encryptedPassword)
+    return active
   }
+
+  export async function getBalanceAndTransactions(cardId: number){
+    console.log(cardId)
+   
+    //Regra de negócio: Somente cartões cadastrados devem poder ser visualizados
+    const {rows: lookingCard} = await mycardRepository.seachCard(cardId)
+    if(!lookingCard) {
+        throw { code: "notFound", message: "Card não cadastrado!" };
+    }
+    const {rows: transactions} = await mycardRepository.searchBusiness(cardId)
+    const {rows: recharges} = await mycardRepository.searchRecharges(cardId)  
+    const balance = 0; 
+    //Para calcular o saldo a minha ideia é fazer um for para somar todos os business.amount e todos os transactions.amout. E aí subtrair um do outro.
+    const BalanceEmployeer = {
+        "Balance": balance,
+        "transactions": transactions,
+        "recharges": recharges
+    }
+    console.log(BalanceEmployeer)
+}
+
+export async function blockedCard(cardId:number, password: number) {
+//Regra de negócio: apenas cartões cadastrados devem ser bloqueados
+const {rows: lookingCard} = await mycardRepository.seachCard(cardId)
+if(!lookingCard) {
+    throw { code: "notFound", message: "Card não cadastrado!" };
+}
+
+// Regra de negócio: Somente cartões não expirados devem ser ativados
+const data = lookingCard[0].expirationDate
+const array = data.split("/")
+const month = (dayjs().month())
+const year = Number(dayjs().year())
+
+if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
+    throw { code: "Unauthorized", message: "Cartão com validade expirada" };
+}
+
+ //Regra de negócio: apenas cartões não bloquados devem ser bloqueados
+ if(lookingCard[0].isBlocked === true) {
+    throw { code: "Unauthorized", message: "Cartão já está bloqueado" };
+}
+console.log(typeof lookingCard[0].password)
+console.log("chegou aqui")
+//regra de negócio: comparando a senha
+const passwordDb = password.toString()
+console.log(passwordDb)
+if(!bcrypt.compareSync(passwordDb, lookingCard[0].password)){
+    throw { code: "Unauthorized", message: "Senha incorreta" };
+}
+
+const blockingCard = await mycardRepository.blokingCard(cardId)
+
+}

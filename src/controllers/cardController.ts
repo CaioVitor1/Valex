@@ -21,6 +21,23 @@ export async function ativateCard(req: Request,res: Response) {
             return res.status(400).send("Envio incorreto")
         }
         const tryActiveCard = await cardServices.tryActive(cardId, decryptedCvc, password)
-        return res.send("ok")
+        console.log(tryActiveCard)
+        return res.send("Cartão ativado")
 
+}
+
+export async function getBalance(req: Request,res: Response){
+    const {cardId} = req.params
+    console.log(cardId)
+    const verifyBalance = await cardServices.getBalanceAndTransactions(Number(cardId))
+   
+    return res.send(verifyBalance)
+
+}
+
+export async function blockedCard(req: Request,res: Response){
+    const {cardId, password} = req.body
+    const tryBlocked = await cardServices.blockedCard(cardId, password)
+    console.log("voltou pra cá")
+    return res.send("Ok")
 }
