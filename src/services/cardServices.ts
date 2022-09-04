@@ -11,7 +11,6 @@ export async function verifydatesNewCard(apiKey: any,employeeId: number, type: s
 if((type !== 'groceries') && (type !== 'restaurant') && (type !==  'transport') &&
 (type !== 'education') && (type !== 'health')){
    throw { code: "Unauthorized", message: "tipo de cartão não permitido!" };
-   //res.status(500).send("tipo de cartão não permitido")
 }
 
 //regra de negócio: verificando se a chave da API pertence a alguma empresa 
@@ -77,21 +76,11 @@ function changeName(lookingEmployee:any) {
   export async function tryActive(cardId: number, decryptedCvc: string, password: number) {
 
     //Regra de negócio: apenas cartões cadastrados devem ser ativados
-    const {rows: lookingCard} = await mycardRepository.seachCard(cardId)
-    if(!lookingCard) {
-        throw { code: "notFound", message: "Card não cadastrado!" };
-    }
+    const lookingCard = await returnLookingCard(cardId)
     console.log(lookingCard)
     
     // Regra de negócio: Somente cartões não expirados devem ser ativados
-    const data = lookingCard[0].expirationDate
-    const array = data.split("/")
-    const month = (dayjs().month())
-    const year = Number(dayjs().year())
-    console.log(array, month, year)
-    if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
-        throw { code: "Unauthorized", message: "Cartão com validade expirada" };
-    }
+    verifyExpirationDate(lookingCard)
 
     //Regra de negócio: apenas cartões não ativados devem ser ativados
     if(lookingCard[0].password !== null) {
@@ -146,14 +135,7 @@ if(!lookingCard) {
 }
 
 // Regra de negócio: Somente cartões não expirados devem ser ativados
-const data = lookingCard[0].expirationDate
-const array = data.split("/")
-const month = (dayjs().month())
-const year = Number(dayjs().year())
-
-if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
-    throw { code: "Unauthorized", message: "Cartão com validade expirada" };
-}
+verifyExpirationDate(lookingCard)
 
  //Regra de negócio: apenas cartões não bloquados devem ser bloqueados
  if(lookingCard[0].isBlocked === true) {
@@ -180,14 +162,7 @@ export async function unblockedCard(cardId:number, password: number) {
     }
     
     // Regra de negócio: Somente cartões não expirados devem ser ativados
-    const data = lookingCard[0].expirationDate
-    const array = data.split("/")
-    const month = (dayjs().month())
-    const year = Number(dayjs().year())
-    
-    if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
-        throw { code: "Unauthorized", message: "Cartão com validade expirada" };
-    }
+    verifyExpirationDate(lookingCard)
     
      //Regra de negócio: apenas cartões não bloquados devem ser bloqueados
      if(lookingCard[0].isBlocked === false) {
@@ -204,4 +179,23 @@ export async function unblockedCard(cardId:number, password: number) {
     
     const unblockingCard = await mycardRepository.unblokingCard(cardId)
     
+    }
+
+    async function returnLookingCard(cardId: number){
+        const {rows: card} = await mycardRepository.seachCard(cardId)
+        if(card.length === 0) {
+            throw { code: "notFound", message: "Cartão não cadastrado!" };
+        }
+        return card
+    }
+
+    async function verifyExpirationDate(lookingCard:any){
+        const data = lookingCard[0].expirationDate
+        const array = data.split("/")
+        const month = (dayjs().month())
+        const year = Number(dayjs().year())
+        console.log(array, month, year)
+        if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
+            throw { code: "Unauthorized", message: "Cartão com validade expirada" };
+        }
     }

@@ -1,4 +1,4 @@
-import { connection } from "../databases/database";
+import connection  from "../databases/database";
 import { TransactionTypes } from "./cardRepository.js";
 
 export interface Business {

@@ -1,4 +1,4 @@
-import { connection } from "../databases/database";
+import connection from "../databases/database";
 export interface Employee {
   id: number;
   fullName: string;
