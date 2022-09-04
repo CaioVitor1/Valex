@@ -64,3 +64,7 @@ WHERE recharges."cardId" = $1;
 export async function blokingCard(cardId: number) {
 return await connection.query('UPDATE cards SET "isBlocked" = true WHERE id = $1;', [cardId])
 }
+
+export async function unblokingCard(cardId: number) {
+  return await connection.query('UPDATE cards SET "isBlocked" = false WHERE id = $1;', [cardId])
+  }

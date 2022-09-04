@@ -38,6 +38,13 @@ export async function getBalance(req: Request,res: Response){
 export async function blockedCard(req: Request,res: Response){
     const {cardId, password} = req.body
     const tryBlocked = await cardServices.blockedCard(cardId, password)
-    console.log("voltou pra cá")
-    return res.send("Ok")
+ 
+    return res.send("Cartão bloqueado")
+}
+
+export async function unblockedCard(req: Request,res: Response){
+    const {cardId, password} = req.body
+    const tryUnBlocked = await cardServices.unblockedCard(cardId, password)
+   
+    return res.send("Cartão desbloqueado")
 }

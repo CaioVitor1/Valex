@@ -171,3 +171,37 @@ if(!bcrypt.compareSync(passwordDb, lookingCard[0].password)){
 const blockingCard = await mycardRepository.blokingCard(cardId)
 
 }
+
+export async function unblockedCard(cardId:number, password: number) {
+    //Regra de negócio: apenas cartões cadastrados devem ser bloqueados
+    const {rows: lookingCard} = await mycardRepository.seachCard(cardId)
+    if(!lookingCard) {
+        throw { code: "notFound", message: "Card não cadastrado!" };
+    }
+    
+    // Regra de negócio: Somente cartões não expirados devem ser ativados
+    const data = lookingCard[0].expirationDate
+    const array = data.split("/")
+    const month = (dayjs().month())
+    const year = Number(dayjs().year())
+    
+    if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
+        throw { code: "Unauthorized", message: "Cartão com validade expirada" };
+    }
+    
+     //Regra de negócio: apenas cartões não bloquados devem ser bloqueados
+     if(lookingCard[0].isBlocked === false) {
+        throw { code: "Unauthorized", message: "Cartão já está desbloqueado" };
+    }
+    console.log(typeof lookingCard[0].password)
+    console.log("chegou aqui")
+    //regra de negócio: comparando a senha
+    const passwordDb = password.toString()
+    console.log(passwordDb)
+    if(!bcrypt.compareSync(passwordDb, lookingCard[0].password)){
+        throw { code: "Unauthorized", message: "Senha incorreta" };
+    }
+    
+    const unblockingCard = await mycardRepository.unblokingCard(cardId)
+    
+    }
