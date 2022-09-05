@@ -116,34 +116,17 @@
 
 
 # Tecnologias
-
+<div display="flex">
 <img height="80" width="100" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" />
 <img height="80" width="100" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/npm/npm-original-wordmark.svg" />
 <img height="80" width="100" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original-wordmark.svg" />
 <img height="80" width="100" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original-wordmark.svg" />
 <img height="80" width="100" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original-wordmark.svg" />
-          
+</div>          
 
 ---
 
 Made with love by <a href='https://www.linkedin.com/in/caiovitor33/'> Caio Vitor </a>
 
-<style>
-    button{
-        width: 150px;
-        height: 41px;
-        background: gray;
-        border-radius: 10px;
-        font-family: 'Roboto';
-        font-style: normal;
-        font-weight: 700;
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        letter-spacing: 0.018em;
-        color: #FFFFFF;
-    }
-    </style>
 
     
