@@ -25,11 +25,18 @@ export async function findByCardId(cardId: number) {
   return result.rows;
 }
 
-export async function insert(paymentData: PaymentInsertData) {
-  const { cardId, businessId, amount } = paymentData;
+export async function insert(cardId:number, businessId:number, amount:number) {
 
   connection.query<any, [number, number, number]>(
     `INSERT INTO payments ("cardId", "businessId", amount) VALUES ($1, $2, $3)`,
     [cardId, businessId, amount]
   );
+}
+
+export async function verifyAmount(cardId:number){
+  const result = await connection.query(`
+  SELECT payments."cardId", SUM(amount) AS soma
+FROM payments WHERE payments."cardId" = $1 GROUP BY(payments."cardId");
+`, [cardId])
+return result
 }

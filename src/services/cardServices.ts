@@ -141,8 +141,7 @@ verifyExpirationDate(lookingCard)
  if(lookingCard[0].isBlocked === true) {
     throw { code: "Unauthorized", message: "Cartão já está bloqueado" };
 }
-console.log(typeof lookingCard[0].password)
-console.log("chegou aqui")
+
 //regra de negócio: comparando a senha
 const passwordDb = password.toString()
 console.log(passwordDb)
@@ -181,7 +180,7 @@ export async function unblockedCard(cardId:number, password: number) {
     
     }
 
-    async function returnLookingCard(cardId: number){
+    export async function returnLookingCard(cardId: number){
         const {rows: card} = await mycardRepository.seachCard(cardId)
         if(card.length === 0) {
             throw { code: "notFound", message: "Cartão não cadastrado!" };
@@ -189,7 +188,7 @@ export async function unblockedCard(cardId:number, password: number) {
         return card
     }
 
-    async function verifyExpirationDate(lookingCard:any){
+    export async function verifyExpirationDate(lookingCard:any){
         const data = lookingCard[0].expirationDate
         const array = data.split("/")
         const month = (dayjs().month())

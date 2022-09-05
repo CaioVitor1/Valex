@@ -25,3 +25,11 @@ export async function insert(cardId: number, amount: number) {
     [cardId, amount]
   );
 }
+
+export async function verifyAmount(cardId: number){
+  const result = await connection.query(`
+  SELECT recharges."cardId", SUM(amount) AS soma
+FROM recharges WHERE recharges."cardId" = $1 GROUP BY(recharges."cardId");
+`, [cardId])
+return result
+}
