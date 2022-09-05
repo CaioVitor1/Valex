@@ -7,16 +7,10 @@ import bcrypt from 'bcrypt';
 export async function verifydatesNewCard(apiKey: any,employeeId: number, type: string) {
     faker.locale = 'pt_BR'
 
-//dúvida: essa validação abaixo fica aqui, no middleware ou no service? fiquei na dúvida pois no notion ele separa isso das regras de negocio
-if((type !== 'groceries') && (type !== 'restaurant') && (type !==  'transport') &&
-(type !== 'education') && (type !== 'health')){
-   throw { code: "Unauthorized", message: "tipo de cartão não permitido!" };
-}
-
 //regra de negócio: verificando se a chave da API pertence a alguma empresa 
 const {rows: lookingKey}:any  = await mycardRepository.searchKey(apiKey)
 console.log(lookingKey)
-if(!lookingKey) {
+if(lookingKey.length === 0) {
     throw { code: "notFound", message: "Não existe empresa com essa chave cadastrada!" };
 }
 
@@ -56,8 +50,8 @@ const encryptedCvc = cryptr.encrypt(cvc);
 console.log("o cvc é: " + cvc)
 console.log("o cvc encriptado é: " + encryptedCvc)
 
-const insertCard = await mycardRepository.insertCard(employeeId, cardNumber, nameCard, encryptedCvc,expirationDate, type)
-
+//const insertCard = await mycardRepository.insertCard(employeeId, cardNumber, nameCard, encryptedCvc,expirationDate, type)
+return cvc
 }
 
 function changeName(lookingEmployee:any) {
@@ -95,7 +89,7 @@ function changeName(lookingEmployee:any) {
     }
  
     //Regra de negócio: senha com 4 números
-    if(typeof password === "string" || (password.toString()).length !== 4) {
+    if(password.toString().length !== 4) {
         throw { code: "Unprocessable_Entity", message: "senha incorreta!" };
     }
 
@@ -112,30 +106,54 @@ function changeName(lookingEmployee:any) {
    
     //Regra de negócio: Somente cartões cadastrados devem poder ser visualizados
     const {rows: lookingCard} = await mycardRepository.seachCard(cardId)
-    if(!lookingCard) {
-        throw { code: "notFound", message: "Card não cadastrado!" };
+    if(lookingCard.length === 0) {
+        throw { code: "notFound", message: "Cartão não cadastrado!" };
     }
     const {rows: transactions} = await mycardRepository.searchBusiness(cardId)
     const {rows: recharges} = await mycardRepository.searchRecharges(cardId)  
-    const balance = 0; 
+    let balance = 0; 
+    let bills = 0
+    let rechargesAmount = 0;
     //Para calcular o saldo a minha ideia é fazer um for para somar todos os business.amount e todos os transactions.amout. E aí subtrair um do outro.
+    console.log(transactions, recharges)
+    for(let i = 0; i < transactions.length;i++){
+        bills += transactions[i].amount
+        
+    }
+    for(let i = 0; i < recharges.length; i++) {
+        rechargesAmount += recharges[i].amount
+        
+    }
+    console.log("as contas são " + bills)
+    console.log("as recargas são " + rechargesAmount)
+    balance = rechargesAmount - bills 
+    
+    
     const BalanceEmployeer = {
         "Balance": balance,
         "transactions": transactions,
         "recharges": recharges
     }
-    console.log(BalanceEmployeer)
+    
+    return BalanceEmployeer
 }
 
 export async function blockedCard(cardId:number, password: number) {
 //Regra de negócio: apenas cartões cadastrados devem ser bloqueados
 const {rows: lookingCard} = await mycardRepository.seachCard(cardId)
-if(!lookingCard) {
+if(lookingCard.length === 0) {
     throw { code: "notFound", message: "Card não cadastrado!" };
 }
 
 // Regra de negócio: Somente cartões não expirados devem ser ativados
-verifyExpirationDate(lookingCard)
+const data = lookingCard[0].expirationDate
+        const array = data.split("/")
+        const month = (dayjs().month())
+        const year = Number(dayjs().year())
+        console.log(array, month, year)
+        if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
+            throw { code: "Unauthorized", message: "Cartão com validade expirada" };
+        }
 
  //Regra de negócio: apenas cartões não bloquados devem ser bloqueados
  if(lookingCard[0].isBlocked === true) {
@@ -156,12 +174,19 @@ const blockingCard = await mycardRepository.blokingCard(cardId)
 export async function unblockedCard(cardId:number, password: number) {
     //Regra de negócio: apenas cartões cadastrados devem ser bloqueados
     const {rows: lookingCard} = await mycardRepository.seachCard(cardId)
-    if(!lookingCard) {
+    if(lookingCard.length === 0) {
         throw { code: "notFound", message: "Card não cadastrado!" };
     }
     
     // Regra de negócio: Somente cartões não expirados devem ser ativados
-    verifyExpirationDate(lookingCard)
+    const data = lookingCard[0].expirationDate
+        const array = data.split("/")
+        const month = (dayjs().month())
+        const year = Number(dayjs().year())
+        console.log(array, month, year)
+        if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
+            throw { code: "Unauthorized", message: "Cartão com validade expirada" };
+        }
     
      //Regra de negócio: apenas cartões não bloquados devem ser bloqueados
      if(lookingCard[0].isBlocked === false) {
@@ -197,4 +222,5 @@ export async function unblockedCard(cardId:number, password: number) {
         if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
             throw { code: "Unauthorized", message: "Cartão com validade expirada" };
         }
+        console.log("Cartão não expirado")
     }

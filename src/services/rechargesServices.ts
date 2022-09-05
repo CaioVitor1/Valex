@@ -1,5 +1,6 @@
 import * as rechargesRepository from "../repositories/rechargeRepository"
 import * as mycardRepository from "../repositories/myCardRepository"
+import * as cardServices from "../services/cardServices"
 import dayjs from "dayjs";
 
 export async function postRecharges(apiKey: any, cardId: number, amount: number){
@@ -24,14 +25,7 @@ if(lookingCard[0].password === null){
 }
 
 //Regra de negócio: Somente cartões não expirados devem receber recargas
-const data = lookingCard[0].expirationDate
-const array = data.split("/")
-const month = (dayjs().month())
-const year = Number(dayjs().year())
-console.log(array, month, year)
-    if((Number(array[1]) < year) || (Number(array[1]) <= 2022 && Number(array[0]) < month)) {
-        throw { code: "Unauthorized", message: "Cartão com validade expirada" };
-    }
+const expiration = cardServices.verifyExpirationDate(lookingCard)
 
 const makeRecharges = await rechargesRepository.insert(cardId, amount)
 }
